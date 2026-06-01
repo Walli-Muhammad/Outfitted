@@ -1,0 +1,17 @@
+# General
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Backend (Python/FastAPI)
+backend/.env
+backend/outfit_planner.db
+backend/venv/
+backend/__pycache__/
+backend/.pytest_cache/
+*.pyc
+backend/test_replicate.py
+backend/sample_garment.png
+
+# Flutter App is handled by app/.gitignore
