@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'constants.dart';
 
 class DioClient {
@@ -14,8 +13,8 @@ class DioClient {
     dio = Dio(
       BaseOptions(
         baseUrl: AppConstants.apiBaseUrl,
-        connectTimeout: const Duration(seconds: 15),
-        receiveTimeout: const Duration(seconds: 15),
+        connectTimeout: const Duration(seconds: 60),
+        receiveTimeout: const Duration(seconds: 120),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -23,18 +22,11 @@ class DioClient {
       ),
     );
 
-    // Setup Bearer Auth interceptor
+    // Setup Auth interceptor with hardcoded dev-user-1
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // Retrieve Firebase Auth token dynamically for secure API calls
-          final user = FirebaseAuth.instance.currentUser;
-          if (user != null) {
-            final token = await user.getIdToken();
-            if (token != null) {
-              options.headers['Authorization'] = 'Bearer $token';
-            }
-          }
+          options.headers['x-user-id'] = 'dev-user-1';
           return handler.next(options);
         },
         onError: (DioException e, handler) {
@@ -46,3 +38,4 @@ class DioClient {
     );
   }
 }
+
