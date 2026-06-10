@@ -65,32 +65,4 @@ async def tag_garment(image_url: str) -> dict:
     
     # Extract clean JSON
     clean = text.replace("```json", "").replace("```", "").strip()
-    tags = json.loads(clean)
-
-    # Validation: Ensure it looks like a clothing item.
-    # "unknown" means Gemini recognised the image but it is not clothing — reject it.
-    # The unknown fallback is reserved for API-level failures, not successful non-clothing detection.
-    from fastapi import HTTPException
-
-    item_type = str(tags.get("type", "")).strip().lower()
-    item_color = str(tags.get("color", "")).strip().lower()
-
-    if item_type == "unknown" or item_color == "unknown":
-        raise HTTPException(
-            status_code=400,
-            detail="This doesn't look like a clothing item. Please photograph a garment."
-        )
-
-    valid_types = [
-        "shirt", "t-shirt", "pants", "jeans", "shorts", "jacket", "coat",
-        "sweater", "dress", "skirt", "shoes", "hoodie", "suit", "blazer",
-        "top", "blouse", "cardigan", "vest"
-    ]
-    if item_type not in valid_types:
-        raise HTTPException(
-            status_code=400,
-            detail="This doesn't look like a clothing item. Please photograph a garment."
-        )
-
-    return tags
-
+    return json.loads(clean)

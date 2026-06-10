@@ -125,11 +125,7 @@ def get_history(user_id: str, db: Session = Depends(get_db)):
     """
     results = (
         db.query(TryOnResult)
-        .filter(
-            TryOnResult.user_id == user_id,
-            TryOnResult.result_image_url != None,
-            TryOnResult.status != "failed"
-        )
+        .filter(TryOnResult.user_id == user_id)
         .order_by(TryOnResult.created_at.desc())
         .all()
     )

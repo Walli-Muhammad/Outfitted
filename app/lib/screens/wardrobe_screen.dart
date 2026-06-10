@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import '../models/wardrobe_item.dart';
 import '../providers/wardrobe_provider.dart';
 import '../widgets/item_card.dart';
 
@@ -69,155 +68,6 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
         );
       },
     );
-  }
-
-  // Opens a bottom sheet to edit wardrobe item tags
-  void _editItemTags(WardrobeItem item) {
-    final typeController = TextEditingController(text: item.type);
-    final colorController = TextEditingController(text: item.color);
-    final styleController = TextEditingController(text: item.style);
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true, // Important so it moves up with keyboard
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (BuildContext context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 20,
-            right: 20,
-            top: 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Edit Garment Tags',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: typeController,
-                decoration: const InputDecoration(
-                  labelText: 'Type (e.g. shirt, pants)',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.checkroom),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: colorController,
-                decoration: const InputDecoration(
-                  labelText: 'Color (e.g. blue, black)',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.color_lens),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: styleController,
-                decoration: const InputDecoration(
-                  labelText: 'Style (e.g. casual, formal)',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.style),
-                ),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () async {
-                  Navigator.pop(context); // close sheet immediately
-
-                  final updateData = {
-                    'type': typeController.text.trim(),
-                    'color': colorController.text.trim(),
-                    'style': styleController.text.trim(),
-                  };
-
-                  try {
-                    await context.read<WardrobeProvider>().updateItem(item.id, updateData);
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Tags updated successfully!'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    }
-                  } catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Failed to update tags.'),
-                          backgroundColor: Colors.red,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    }
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                child: const Text('Save Changes', style: TextStyle(fontSize: 16)),
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  // Shows a confirmation dialog to delete a wardrobe item
-  Future<void> _confirmDelete(WardrobeItem item) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Delete this item?'),
-          content: const Text('Are you sure you want to delete this wardrobe item?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed == true && mounted) {
-      try {
-        await context.read<WardrobeProvider>().deleteItem(item.id);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Item deleted successfully.'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to delete item: $e'),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      }
-    }
   }
 
   // Handles image picker action and triggers upload
@@ -323,7 +173,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                     const Text(
                       'Photograph your wardrobe garments. Our AI will automatically categorize and tag them to build your virtual catalog.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.black54),
+                      style: const TextStyle(color: Colors.black54),
                     ),
                     const SizedBox(height: 32),
                     ElevatedButton.icon(
@@ -350,13 +200,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                 ),
                 itemBuilder: (context, index) {
                   final item = provider.items[index];
-                  return GestureDetector(
-                    onLongPress: () => _confirmDelete(item),
-                    child: WardrobeItemCard(
-                      item: item,
-                      onTap: () => _editItemTags(item),
-                    ),
-                  );
+                  return WardrobeItemCard(item: item);
                 },
               ),
             ),
@@ -387,7 +231,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                         const Text(
                           'Uploading to secure catalog and auto-categorizing...',
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 12, color: Colors.black54),
+                          style: const TextStyle(fontSize: 12, color: Colors.black54),
                         ),
                       ],
                     ),

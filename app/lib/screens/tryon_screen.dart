@@ -451,7 +451,7 @@ class _HistoryCard extends StatelessWidget {
                 child: CachedNetworkImage(
                   imageUrl: result.resultImageUrl!,
                   height: 320,
-                  fit: BoxFit.contain,
+                  fit: BoxFit.cover,
                   placeholder: (ctx, url) => const SizedBox(
                     height: 320,
                     child: Center(child: CircularProgressIndicator()),

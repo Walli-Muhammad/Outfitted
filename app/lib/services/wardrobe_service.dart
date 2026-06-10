@@ -42,20 +42,4 @@ class WardrobeService {
       rethrow;
     }
   }
-
-  // Updates an existing wardrobe item's tags (type, color, style)
-  Future<WardrobeItem> updateItem(String itemId, Map<String, dynamic> updateData) async {
-    try {
-      final response = await _dio.patch('/wardrobe/items/$itemId', data: updateData);
-      if (response.statusCode == 200) {
-        return WardrobeItem.fromJson(response.data as Map<String, dynamic>);
-      }
-      throw Exception('Failed to update wardrobe item');
-    } on DioException catch (e) {
-      throw Exception(e.response?.data['detail'] ?? 'Failed to update wardrobe item');
-    } catch (e) {
-      print('Update Wardrobe Item Error: $e');
-      rethrow;
-    }
-  }
 }
