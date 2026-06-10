@@ -70,6 +70,20 @@ class TryOnProvider with ChangeNotifier {
     }
   }
 
+  // ── Delete ─────────────────────────────────────────────────────────────────
+
+  Future<void> deleteTryOn(String resultId) async {
+    try {
+      await _service.deleteTryOn(resultId);
+      history.removeWhere((r) => r.id == resultId);
+      notifyListeners();
+    } catch (e) {
+      errorMessage = 'Could not delete try-on result. Please try again.';
+      debugPrint('TryOnProvider.deleteTryOn error: $e');
+      notifyListeners();
+    }
+  }
+
   void clearError() {
     errorMessage = null;
     notifyListeners();

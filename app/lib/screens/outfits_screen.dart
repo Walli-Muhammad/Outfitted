@@ -17,10 +17,13 @@ const _occasions = ['Casual', 'Work', 'Dinner', 'Party'];
 // ── Weather helpers ───────────────────────────────────────────────────────────
 
 String _weatherEmoji(String condition) {
+  final hour = DateTime.now().hour;
+  final isNight = hour >= 19 || hour < 6;
+
   switch (condition.toLowerCase()) {
     case 'sunny':
     case 'clear':
-      return '☀️';
+      return isNight ? '🌙' : '☀️';
     case 'cloudy':
     case 'clouds':
       return '⛅';
@@ -42,6 +45,7 @@ String _weatherEmoji(String condition) {
       return '🌤️';
   }
 }
+
 
 Color _weatherBg(String condition) {
   switch (condition.toLowerCase()) {

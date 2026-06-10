@@ -101,14 +101,13 @@ class _TryOnScreenState extends State<TryOnScreen> {
                     ),
                 ],
               ),
-              body: tryOnProv.modelPhotoUrl == null
-                  ? _SetupSection(onUpload: _pickAndUploadModelPhoto,
-                      isUploading: tryOnProv.isUploadingPhoto)
-                  : _FittingRoomSection(
-                      tryOnProv: tryOnProv,
-                      wardrobeProv: wardrobeProv,
-                      onItemTap: _triggerTryOn,
-                    ),
+              // History is always visible — model photo only gates new try-ons
+              body: _FittingRoomSection(
+                tryOnProv: tryOnProv,
+                wardrobeProv: wardrobeProv,
+                onItemTap: _triggerTryOn,
+                onUploadModel: _pickAndUploadModelPhoto,
+              ),
             ),
 
             // ── Full-screen generating overlay ─────────────────────────────
@@ -125,80 +124,19 @@ class _TryOnScreenState extends State<TryOnScreen> {
   }
 }
 
-// ── Section A: Setup ──────────────────────────────────────────────────────────
-
-class _SetupSection extends StatelessWidget {
-  final VoidCallback onUpload;
-  final bool isUploading;
-
-  const _SetupSection({required this.onUpload, required this.isUploading});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final primary = theme.colorScheme.primary;
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                color: primary.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-                border: Border.all(color: primary.withValues(alpha: 0.2), width: 2),
-              ),
-              child: Icon(
-                Icons.person_outline_rounded,
-                size: 64,
-                color: primary.withValues(alpha: 0.6),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Set up your fitting room',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Take a full-body photo to try clothes on yourself',
-              style: theme.textTheme.bodyMedium?.copyWith(color: Colors.black54),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: isUploading ? null : onUpload,
-                icon: const Icon(Icons.upload_rounded),
-                label: const Text('Upload Model Photo'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ── Section B: Fitting Room ───────────────────────────────────────────────────
+// ── Section: Fitting Room ─────────────────────────────────────────────────────
 
 class _FittingRoomSection extends StatelessWidget {
   final TryOnProvider tryOnProv;
   final WardrobeProvider wardrobeProv;
   final ValueChanged<String> onItemTap;
+  final VoidCallback onUploadModel;
 
   const _FittingRoomSection({
     required this.tryOnProv,
     required this.wardrobeProv,
     required this.onItemTap,
+    required this.onUploadModel,
   });
 
   @override
@@ -207,43 +145,7 @@ class _FittingRoomSection extends StatelessWidget {
 
     return CustomScrollView(
       slivers: [
-        // ── Model photo status bar ─────────────────────────────────────
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 24,
-                  backgroundImage: CachedNetworkImageProvider(
-                    tryOnProv.modelPhotoUrl!,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Your fitting room is ready',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        'Tap a garment below to try it on',
-                        style: theme.textTheme.bodySmall
-                            ?.copyWith(color: Colors.black54),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        // ── Wardrobe garment strip (premium-gated) ─────────────────────
+        // ── Wardrobe section — inline setup banner when no model photo ─
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -254,13 +156,94 @@ class _FittingRoomSection extends StatelessWidget {
             ),
           ),
         ),
-        SliverToBoxAdapter(
-          child: _GarmentStrip(
-            isPremium: tryOnProv.isPremium,
-            wardrobeProv: wardrobeProv,
-            onItemTap: onItemTap,
+
+        if (tryOnProv.modelPhotoUrl == null)
+          // Inline banner — no model photo yet
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.07),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.person_outline_rounded,
+                      color: theme.colorScheme.primary,
+                      size: 28,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Upload a model photo to start trying clothes on',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: tryOnProv.isUploadingPhoto ? null : onUploadModel,
+                      child: const Text('Upload'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          )
+        else
+          // Model photo set — show avatar status bar + garment strip
+          SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 22,
+                        backgroundImage: CachedNetworkImageProvider(
+                          tryOnProv.modelPhotoUrl!,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Your fitting room is ready',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Tap a garment below to try it on',
+                              style: theme.textTheme.bodySmall
+                                  ?.copyWith(color: Colors.black54),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                _GarmentStrip(
+                  isPremium: tryOnProv.isPremium,
+                  wardrobeProv: wardrobeProv,
+                  onItemTap: onItemTap,
+                ),
+              ],
+            ),
           ),
-        ),
 
         // ── Divider ────────────────────────────────────────────────────
         const SliverToBoxAdapter(
@@ -300,6 +283,32 @@ class _FittingRoomSection extends StatelessWidget {
               (ctx, i) => _HistoryCard(
                 result: tryOnProv.history[i],
                 wardrobeProv: wardrobeProv,
+                onDelete: (id) async {
+                  final confirmed = await showDialog<bool>(
+                    context: ctx,
+                    builder: (_) => AlertDialog(
+                      title: const Text('Delete this try-on?'),
+                      content: const Text(
+                          'This will permanently remove this result.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: const Text(
+                            'Delete',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed == true && ctx.mounted) {
+                    ctx.read<TryOnProvider>().deleteTryOn(id);
+                  }
+                },
               ),
               childCount: tryOnProv.history.length,
             ),
@@ -426,8 +435,13 @@ class _GarmentStrip extends StatelessWidget {
 class _HistoryCard extends StatelessWidget {
   final TryOnResult result;
   final WardrobeProvider wardrobeProv;
+  final ValueChanged<String> onDelete;
 
-  const _HistoryCard({required this.result, required this.wardrobeProv});
+  const _HistoryCard({
+    required this.result,
+    required this.wardrobeProv,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -440,7 +454,9 @@ class _HistoryCard extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: Card(
+      child: GestureDetector(
+        onLongPress: () => onDelete(result.id),
+        child: Card(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -515,6 +531,7 @@ class _HistoryCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

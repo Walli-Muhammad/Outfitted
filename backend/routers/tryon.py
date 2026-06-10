@@ -122,10 +122,13 @@ async def generate_tryon(body: TryOnRequest, db: Session = Depends(get_db)):
 def get_history(user_id: str, db: Session = Depends(get_db)):
     """
     Returns all TryOnResult rows for a user ordered by created_at descending.
+    Only returns completed results with a valid result_image_url.
     """
     results = (
         db.query(TryOnResult)
         .filter(TryOnResult.user_id == user_id)
+        .filter(TryOnResult.result_image_url.isnot(None))
+        .filter(TryOnResult.status != "failed")
         .order_by(TryOnResult.created_at.desc())
         .all()
     )
@@ -140,3 +143,18 @@ def get_history(user_id: str, db: Session = Depends(get_db)):
         }
         for r in results
     ]
+
+
+@router.delete("/history/{result_id}")
+def delete_history_result(result_id: str, db: Session = Depends(get_db)):
+    """
+    Deletes a single TryOnResult by its ID.
+    """
+    result = db.query(TryOnResult).filter(TryOnResult.id == result_id).first()
+    if not result:
+        raise HTTPException(status_code=404, detail="Try-on result not found")
+
+    db.delete(result)
+    db.commit()
+    return {"deleted": True}
+

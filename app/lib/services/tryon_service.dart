@@ -45,4 +45,9 @@ class TryOnService {
         .map((e) => TryOnResult.fromJson(e as Map<String, dynamic>))
         .toList();
   }
+
+  /// Deletes a single try-on result via DELETE /tryon/history/{resultId}.
+  Future<void> deleteTryOn(String resultId) async {
+    await _dio.delete('/tryon/history/$resultId');
+  }
 }
