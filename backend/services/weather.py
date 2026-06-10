@@ -47,6 +47,7 @@ async def get_weather(city: str) -> dict:
                     "units": "metric",
                 },
             )
+            print(f"DEBUG: OpenWeatherMap API response for '{city}': {resp.status_code} - {resp.text}")
             resp.raise_for_status()
             data = resp.json()
 

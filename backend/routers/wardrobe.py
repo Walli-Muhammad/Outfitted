@@ -50,6 +50,8 @@ async def create_wardrobe_item(
     # 2. Get AI Tags with robust fallback logic
     try:
         tags = await tag_garment(image_url)
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"AI Vision Tagging Error (falling back to defaults): {e}")
         tags = {
@@ -93,3 +95,48 @@ def get_user_wardrobe(user_id: str, db: Session = Depends(get_db)):
               .all()
               
     return items
+
+
+from pydantic import BaseModel
+
+class WardrobeItemUpdate(BaseModel):
+    type: str | None = None
+    color: str | None = None
+    style: str | None = None
+
+
+@router.patch("/items/{item_id}")
+def update_wardrobe_item(item_id: str, body: WardrobeItemUpdate, db: Session = Depends(get_db)):
+    """
+    Updates the type, color, and/or style fields of a specific wardrobe item.
+    """
+    db_item = db.query(WardrobeItem).filter(WardrobeItem.id == item_id).first()
+    if not db_item:
+        raise HTTPException(status_code=404, detail="Wardrobe item not found")
+        
+    if body.type is not None:
+        db_item.type = body.type
+    if body.color is not None:
+        db_item.color = body.color
+    if body.style is not None:
+        db_item.style = body.style
+        
+    db.commit()
+    db.refresh(db_item)
+    return db_item
+
+
+@router.delete("/items/{item_id}")
+def delete_wardrobe_item(item_id: str, db: Session = Depends(get_db)):
+    """
+    Deletes a specific wardrobe item from the database.
+    """
+    db_item = db.query(WardrobeItem).filter(WardrobeItem.id == item_id).first()
+    if not db_item:
+        raise HTTPException(status_code=404, detail="Wardrobe item not found")
+        
+    db.delete(db_item)
+    db.commit()
+    return {"deleted": True}
+
+

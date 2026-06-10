@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../core/dio_client.dart';
 import '../models/wardrobe_item.dart';
 import '../services/wardrobe_service.dart';
 
@@ -57,5 +58,51 @@ class WardrobeProvider with ChangeNotifier {
   void clearError() {
     _errorMessage = null;
     notifyListeners();
+  }
+
+  // Update an item's tags
+  Future<void> updateItem(String itemId, Map<String, dynamic> updateData) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final updatedItem = await _service.updateItem(itemId, updateData);
+      // Replace the old item with the updated item
+      final index = _items.indexWhere((item) => item.id == itemId);
+      if (index != -1) {
+        _items[index] = updatedItem;
+      }
+    } catch (e) {
+      _errorMessage = 'Failed to update item details.';
+      print('Update Item Provider Error: $e');
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Delete a wardrobe item
+  Future<void> deleteItem(String itemId) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final response = await DioClient().dio.delete('/wardrobe/items/$itemId');
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        _items.removeWhere((item) => item.id == itemId);
+      } else {
+        throw Exception('Failed to delete item');
+      }
+    } catch (e) {
+      _errorMessage = 'Failed to delete item.';
+      print('Delete Item Provider Error: $e');
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 }
