@@ -5,11 +5,13 @@ import '../models/wardrobe_item.dart';
 class WardrobeItemCard extends StatelessWidget {
   final WardrobeItem item;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   const WardrobeItemCard({
     super.key,
     required this.item,
     this.onTap,
+    this.onLongPress,
   });
 
   // Helper to map color name string to Flutter Color for beautiful dot indicators
@@ -51,6 +53,7 @@ class WardrobeItemCard extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
+      onLongPress: onLongPress,
       borderRadius: BorderRadius.circular(16),
       child: Card(
         child: Column(

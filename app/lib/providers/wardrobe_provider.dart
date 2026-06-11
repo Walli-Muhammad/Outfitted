@@ -53,6 +53,41 @@ class WardrobeProvider with ChangeNotifier {
     }
   }
 
+  // Deletes an item from backend and removes it from local list
+  Future<void> deleteItem(String itemId) async {
+    try {
+      await _service.deleteItem(itemId);
+      _items.removeWhere((item) => item.id == itemId);
+      notifyListeners();
+    } catch (e) {
+      print('Delete Item Provider Error: $e');
+      rethrow;
+    }
+  }
+
+  // Updates a wardrobe item's type, color, and style
+  Future<void> updateItem(String itemId, String type, String color, String style) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final updatedItem = await _service.updateItem(itemId, type, color, style);
+      final index = _items.indexWhere((item) => item.id == itemId);
+      if (index != -1) {
+        _items[index] = updatedItem;
+        notifyListeners();
+      }
+    } catch (e) {
+      _errorMessage = 'Failed to update wardrobe item.';
+      print('Update Item Provider Error: $e');
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   // Clear any existing error messages
   void clearError() {
     _errorMessage = null;

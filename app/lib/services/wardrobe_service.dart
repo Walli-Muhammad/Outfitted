@@ -42,4 +42,35 @@ class WardrobeService {
       rethrow;
     }
   }
+
+  // Deletes a single wardrobe item by ID
+  Future<void> deleteItem(String itemId) async {
+    try {
+      await _dio.delete('/wardrobe/items/$itemId');
+    } catch (e) {
+      print('Delete Wardrobe Item Error: $e');
+      rethrow;
+    }
+  }
+
+  // Updates specific wardrobe item attributes (type, color, style)
+  Future<WardrobeItem> updateItem(String itemId, String type, String color, String style) async {
+    try {
+      final response = await _dio.patch(
+        '/wardrobe/items/$itemId',
+        data: {
+          'type': type,
+          'color': color,
+          'style': style,
+        },
+      );
+      if (response.statusCode == 200) {
+        return WardrobeItem.fromJson(response.data as Map<String, dynamic>);
+      }
+      throw Exception('Failed to update wardrobe item');
+    } catch (e) {
+      print('Update Wardrobe Item Error: $e');
+      rethrow;
+    }
+  }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/wardrobe_provider.dart';
+import '../models/wardrobe_item.dart';
 import '../widgets/item_card.dart';
 
 class WardrobeScreen extends StatefulWidget {
@@ -109,6 +110,138 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
     }
   }
 
+  void _editItemTags(BuildContext context, WardrobeItem item, WardrobeProvider provider) {
+    final typeController = TextEditingController(text: item.type);
+    final colorController = TextEditingController(text: item.color);
+    final styleController = TextEditingController(text: item.style);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        final theme = Theme.of(context);
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 24.0,
+            right: 24.0,
+            top: 24.0,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24.0,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Edit Item Details',
+                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: typeController,
+                  decoration: const InputDecoration(
+                    labelText: 'Type',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: colorController,
+                  decoration: const InputDecoration(
+                    labelText: 'Color',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: styleController,
+                  decoration: const InputDecoration(
+                    labelText: 'Style',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF534AB7),
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () async {
+                          final navigator = Navigator.of(context);
+                          final scaffoldMessenger = ScaffoldMessenger.of(context);
+                          try {
+                            await provider.updateItem(
+                              item.id,
+                              typeController.text.trim(),
+                              colorController.text.trim(),
+                              styleController.text.trim(),
+                            );
+                            navigator.pop();
+                            scaffoldMessenger.showSnackBar(
+                              const SnackBar(
+                                content: Text('Item updated successfully!'),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          } catch (e) {
+                            scaffoldMessenger.showSnackBar(
+                              SnackBar(
+                                content: Text('Failed to update item: $e'),
+                                backgroundColor: Colors.red.shade700,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        },
+                        child: const Text('Save'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteItem(BuildContext context, WardrobeItem item, WardrobeProvider provider) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Delete this item?'),
+        content: const Text('This will permanently remove it from your wardrobe.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      await provider.deleteItem(item.id);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -200,7 +333,11 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                 ),
                 itemBuilder: (context, index) {
                   final item = provider.items[index];
-                  return WardrobeItemCard(item: item);
+                  return WardrobeItemCard(
+                    item: item,
+                    onTap: () => _editItemTags(context, item, provider),
+                    onLongPress: () => _deleteItem(context, item, provider),
+                  );
                 },
               ),
             ),

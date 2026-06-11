@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
+from typing import Optional
 from database import get_db
 from models import WardrobeItem, User
 from services import upload_image, tag_garment
@@ -50,6 +52,8 @@ async def create_wardrobe_item(
     # 2. Get AI Tags with robust fallback logic
     try:
         tags = await tag_garment(image_url)
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"AI Vision Tagging Error (falling back to defaults): {e}")
         tags = {
@@ -93,3 +97,44 @@ def get_user_wardrobe(user_id: str, db: Session = Depends(get_db)):
               .all()
               
     return items
+
+
+class WardrobeItemUpdate(BaseModel):
+    type: Optional[str] = None
+    color: Optional[str] = None
+    style: Optional[str] = None
+
+
+@router.patch("/items/{item_id}")
+def update_wardrobe_item(item_id: str, payload: WardrobeItemUpdate, db: Session = Depends(get_db)):
+    """
+    Updates specific attributes (type, color, style) of a wardrobe item.
+    """
+    item = db.query(WardrobeItem).filter(WardrobeItem.id == item_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Wardrobe item not found")
+
+    if payload.type is not None:
+        item.type = payload.type
+    if payload.color is not None:
+        item.color = payload.color
+    if payload.style is not None:
+        item.style = payload.style
+
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+@router.delete("/items/{item_id}")
+def delete_wardrobe_item(item_id: str, db: Session = Depends(get_db)):
+    """
+    Deletes a single wardrobe item by its ID.
+    """
+    item = db.query(WardrobeItem).filter(WardrobeItem.id == item_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Wardrobe item not found")
+
+    db.delete(item)
+    db.commit()
+    return {"deleted": True}
