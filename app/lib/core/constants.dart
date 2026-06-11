@@ -2,7 +2,7 @@ class AppConstants {
   // Use the active host machine's Wi-Fi IPv4 address so physical devices on the same network can connect.
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://192.168.18.70:8000',
+    defaultValue: 'https://outfitted-production.up.railway.app',
   );
 
   // Freemium limits
