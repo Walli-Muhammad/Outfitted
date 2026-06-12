@@ -62,7 +62,7 @@ class TryOnProvider with ChangeNotifier {
 
     try {
       final data = await _service.getHistory(userId);
-      history = data['history'] as List<TryOnResult>;
+      history = List<TryOnResult>.from(data['history'] as Iterable);
       modelPhotoUrl = data['model_photo_url'] as String?;
     } catch (e) {
       debugPrint('TryOnProvider.loadHistory error: $e');
