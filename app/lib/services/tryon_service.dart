@@ -37,13 +37,18 @@ class TryOnService {
     return TryOnResult.fromJson(response.data!);
   }
 
-  /// Fetches all try-on history for a user from GET /tryon/history/{userId}.
-  Future<List<TryOnResult>> getHistory(String userId) async {
-    final response = await _dio.get<List<dynamic>>('/tryon/history/$userId');
-    final list = response.data ?? [];
-    return list
+  /// Fetches try-on history and user model photo URL from GET /tryon/history/{userId}.
+  Future<Map<String, dynamic>> getHistory(String userId) async {
+    final response = await _dio.get<Map<String, dynamic>>('/tryon/history/$userId');
+    final data = response.data ?? {};
+    final list = data['history'] as List? ?? [];
+    final history = list
         .map((e) => TryOnResult.fromJson(e as Map<String, dynamic>))
         .toList();
+    return {
+      'model_photo_url': data['model_photo_url'] as String?,
+      'history': history,
+    };
   }
 
   /// Deletes a single try-on result via DELETE /tryon/history/{resultId}.

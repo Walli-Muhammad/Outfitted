@@ -124,6 +124,7 @@ def get_history(user_id: str, db: Session = Depends(get_db)):
     Returns all TryOnResult rows for a user ordered by created_at descending.
     Only returns completed results with a valid result_image_url.
     """
+    user = _upsert_user(db, user_id)
     results = (
         db.query(TryOnResult)
         .filter(TryOnResult.user_id == user_id)
@@ -133,16 +134,19 @@ def get_history(user_id: str, db: Session = Depends(get_db)):
         .all()
     )
 
-    return [
-        {
-            "id": r.id,
-            "result_image_url": r.result_image_url,
-            "item_id": r.wardrobe_item_id,
-            "status": r.status,
-            "created_at": r.created_at.isoformat() if r.created_at else None,
-        }
-        for r in results
-    ]
+    return {
+        "model_photo_url": user.full_body_photo_url,
+        "history": [
+            {
+                "id": r.id,
+                "result_image_url": r.result_image_url,
+                "item_id": r.wardrobe_item_id,
+                "status": r.status,
+                "created_at": r.created_at.isoformat() if r.created_at else None,
+            }
+            for r in results
+        ]
+    }
 
 
 @router.delete("/history/{result_id}")
