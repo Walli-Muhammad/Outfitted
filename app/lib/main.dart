@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'core/theme.dart';
 import 'providers/wardrobe_provider.dart';
 import 'providers/outfit_provider.dart';
@@ -9,6 +10,7 @@ import 'screens/wardrobe_screen.dart';
 import 'screens/outfits_screen.dart';
 import 'screens/tryon_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/onboarding_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +25,9 @@ void main() async {
     print('Please configure Firebase using FlutterFire CLI to activate live authentication.');
   }
 
+  final prefs = await SharedPreferences.getInstance();
+  final bool onboardingComplete = prefs.getBool('onboarding_complete') ?? false;
+
   runApp(
     MultiProvider(
       providers: [
@@ -30,21 +35,22 @@ void main() async {
         ChangeNotifierProvider(create: (_) => OutfitProvider()),
         ChangeNotifierProvider(create: (_) => TryOnProvider()),
       ],
-      child: const MyApp(),
+      child: MyApp(onboardingComplete: onboardingComplete),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool onboardingComplete;
+  const MyApp({super.key, required this.onboardingComplete});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'AI Outfit Planner',
+      title: 'Outfitted',
       theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
-      home: const MainDashboard(),
+      home: onboardingComplete ? const MainDashboard() : const OnboardingScreen(),
     );
   }
 }
